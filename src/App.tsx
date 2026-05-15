@@ -34,11 +34,24 @@ import {
   serverTimestamp, 
   orderBy 
 } from 'firebase/firestore';
-import { Settings, PenTool, Layout, Eye, Save, X, ChevronLeft, Camera } from 'lucide-react';
+import { Settings, PenTool, Layout, Eye, Save, X, ChevronLeft, Camera, WifiOff, Zap } from 'lucide-react';
 import { BlogPost, Post, User } from './types';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const { user: authUser, profile: currentUser, loading } = useAuth();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const EMPTY_BLOG_POST: BlogPost = {
     id: '',
@@ -489,6 +502,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-sky-50 text-zinc-900 selection:bg-sky-200">
+      <AnimatePresence>
+        {isOffline && (
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[100] bg-zinc-900 text-white p-2 flex items-center justify-center gap-3 border-b-4 border-black"
+          >
+            <WifiOff className="w-4 h-4 text-sky-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Adventure in Progress (Offline Mode)</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Navigation 
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
@@ -502,6 +529,15 @@ export default function App() {
           {renderContent()}
         </div>
       </main>
+
+      <footer className="py-10 border-t-4 border-black bg-white">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2 italic underline decoration-sky-200 decoration-4">The Adventure Portal</p>
+          <p className="text-sm font-bold leading-relaxed">
+            Contact me at <a href="mailto:wangnicky20@gmail.com" className="text-sky-500 hover:underline">wangnicky20@gmail.com</a> for new features and recommendations.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
