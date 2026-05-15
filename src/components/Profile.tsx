@@ -12,7 +12,7 @@ interface ProfileProps {
   user: User;
   snapshots: Post[];
   region: string;
-  onUpdate?: (user: User) => void;
+  onUpdate: (user: User) => Promise<void>;
 }
 
 export default function Profile({ user, snapshots, region, onUpdate }: ProfileProps) {
@@ -49,16 +49,28 @@ export default function Profile({ user, snapshots, region, onUpdate }: ProfilePr
     }
   };
 
-  const handleSave = () => {
-    const updatedUser = {
-      ...user,
-      username: editForm.username,
-      avatar: editForm.avatar,
-      name: editForm.name,
-      bio: editForm.bio
-    };
-    onUpdate?.(updatedUser);
-    setIsEditing(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setErrorMsg(null);
+    try {
+      const updatedUser = {
+        ...user,
+        username: editForm.username,
+        avatar: editForm.avatar,
+        name: editForm.name,
+        bio: editForm.bio
+      };
+      await onUpdate(updatedUser);
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error('Failed to update profile:', err);
+      setErrorMsg('Magic spell failed! Check your connection and try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -190,17 +202,17 @@ export default function Profile({ user, snapshots, region, onUpdate }: ProfilePr
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg bg-white border-4 border-black rounded-[40px] shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-lg bg-white border-4 border-black rounded-[40px] shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[85vh] overflow-hidden"
             >
-              <div className="flex items-center justify-between p-10 pb-4">
+              <div className="flex items-center justify-between p-8 pb-4 shrink-0 bg-white border-b-2 border-black/5">
                 <h2 className="text-3xl font-black italic tracking-tighter uppercase underline">Update Identity</h2>
                 <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-10 pb-10">
-                <div className="space-y-6">
+              <div className="flex-1 overflow-y-auto p-8 pt-4 custom-scrollbar">
+                <div className="space-y-6 pb-4">
                   <div className="flex flex-col items-center mb-8">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                         <div className="w-32 h-32 rounded-full border-4 border-black overflow-hidden bg-sky-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative">
@@ -272,12 +284,23 @@ export default function Profile({ user, snapshots, region, onUpdate }: ProfilePr
                     />
                   </div>
 
+                  {errorMsg && (
+                    <div className="bg-red-50 border-2 border-red-500 p-4 rounded-2xl text-xs font-bold text-red-600">
+                      {errorMsg}
+                    </div>
+                  )}
+
                   <button 
                     onClick={handleSave}
-                    className="w-full pokemon-button bg-black text-white py-4 flex items-center justify-center gap-3"
+                    disabled={isSaving}
+                    className="w-full pokemon-button bg-black text-white py-4 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Save className="w-5 h-5 text-yellow-400" />
-                    CONFIRM UPDATES
+                    {isSaving ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Save className="w-5 h-5 text-yellow-400" />
+                    )}
+                    {isSaving ? 'CASTING SPELL...' : 'CONFIRM UPDATES'}
                   </button>
                 </div>
               </div>

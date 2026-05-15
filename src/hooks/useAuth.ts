@@ -27,7 +27,8 @@ export function useAuth() {
             setProfile({ id: docSnap.id, ...docSnap.data() } as User);
           } else {
             // Create initial profile if it doesn't exist
-            const initialProfile: Omit<User, 'id'> = {
+            const initialProfile: Omit<User, 'id'> & { uid: string } = {
+              uid: firebaseUser.uid,
               name: firebaseUser.displayName || 'Traveler',
               username: firebaseUser.email?.split('@')[0] || 'traveler',
               avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${firebaseUser.uid}`,

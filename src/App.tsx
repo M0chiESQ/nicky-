@@ -92,7 +92,12 @@ export default function App() {
     if (!authUser) return;
     try {
       const userDocRef = doc(db, 'users', authUser.uid);
-      await updateDoc(userDocRef, { ...updatedUser, updatedAt: serverTimestamp() });
+      const { id, ...dataToUpdate } = updatedUser;
+      await updateDoc(userDocRef, { 
+        ...dataToUpdate, 
+        uid: authUser.uid,
+        updatedAt: serverTimestamp() 
+      });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${authUser.uid}`);
     }
@@ -467,10 +472,13 @@ export default function App() {
     }
   };
 
-  if (loading) {
+  if (loading || (authUser && !currentUser)) {
     return (
       <div className="min-h-screen bg-sky-50 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-black border-t-sky-400 rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-16 h-16 border-8 border-black border-t-sky-400 rounded-full animate-spin shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" />
+          <p className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">Summoning your profile...</p>
+        </div>
       </div>
     );
   }

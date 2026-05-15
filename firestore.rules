@@ -8,7 +8,7 @@ service cloud.firestore {
 
     // --- Helper Functions ---
     function isSignedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null;
     }
 
     function isOwner(userId) {
@@ -31,41 +31,51 @@ service cloud.firestore {
 
     function isValidUser(data) {
       return data.uid == request.auth.uid &&
-             data.username is string && data.username.size() <= 50 &&
-             data.name is string && data.name.size() <= 100 &&
-             (data.bio == null || (data.bio is string && data.bio.size() <= 500)) &&
-             data.keys().hasAll(['uid', 'username', 'name', 'avatar', 'followers', 'following', 'adventures', 'updatedAt']) &&
-             data.keys().size() == 8;
+             data.username is string && data.username.size() <= 100 &&
+             data.name is string && data.name.size() <= 200 &&
+             (data.bio == null || (data.bio is string && data.bio.size() <= 1000)) &&
+             data.avatar is string &&
+             data.followers is number &&
+             data.following is number &&
+             data.adventures is number &&
+             data.keys().hasAll(['uid', 'username', 'name', 'avatar', 'followers', 'following', 'adventures', 'updatedAt']);
     }
 
-    function isValidPost(data) {
-      return data.userId == request.auth.uid &&
+    function isValidBlogPost(data) {
+      return data.authorId == request.auth.uid &&
              data.title is string && data.title.size() <= 200 &&
-             data.content is string && data.content.size() <= 10000 &&
-             data.createdAt == request.time;
+             data.content is string && data.content.size() <= 50000 &&
+             data.keys().hasAll(['authorId', 'title', 'content', 'date']);
+    }
+
+    function isValidSnapshot(data) {
+      return data.userId == request.auth.uid &&
+             data.imageUrl is string &&
+             data.createdAt is number &&
+             data.keys().hasAll(['userId', 'imageUrl', 'createdAt', 'type']);
     }
 
     // --- Collections ---
 
     match /users/{userId} {
       allow get: if true;
-      allow list: if true; // Public profiles are searchable
+      allow list: if true;
       allow create: if isOwner(userId) && isValidUser(incoming());
-      allow update: if isOwner(userId) && isValidUser(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['username', 'name', 'avatar', 'bio', 'updatedAt'])
-      );
+      allow update: if isOwner(userId) && isValidUser(incoming());
     }
 
-    match /posts/{postId} {
+    match /blog_posts/{postId} {
       allow read: if true;
-      allow create: if isSignedIn() && isValidPost(incoming());
-      allow update: if isOwner(existing().userId) && isValidPost(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'imageUrl', 'category', 'readTime'])
-      );
+      allow create: if isSignedIn() && isValidBlogPost(incoming());
+      allow update: if isOwner(existing().authorId) && isValidBlogPost(incoming());
+      allow delete: if isOwner(existing().authorId);
+    }
+
+    match /snapshots/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidSnapshot(incoming());
+      allow update: if isOwner(existing().userId) && isValidSnapshot(incoming());
       allow delete: if isOwner(existing().userId);
     }
-
-    // Inter-record consistency check
-    // If we were adding likes or similar, we'd use exists() or existsAfter()
   }
 }
