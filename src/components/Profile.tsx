@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
-import { Grid, Settings, Bookmark, User as UserIcon, Heart, X, Camera, Save } from 'lucide-react';
-import { MOCK_USER } from '../constants';
+import React, { useState, useEffect, useRef } from 'react';
+import { Grid, Settings, Bookmark, User as UserIcon, Heart, X, Camera, Save, Upload } from 'lucide-react';
 import { Post, User } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -18,12 +17,37 @@ interface ProfileProps {
 
 export default function Profile({ user, snapshots, region, onUpdate }: ProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editForm, setEditForm] = useState({
     username: user.username,
     avatar: user.avatar,
     name: user.name,
     bio: user.bio || ''
   });
+
+  useEffect(() => {
+    setEditForm({
+      username: user.username,
+      avatar: user.avatar,
+      name: user.name,
+      bio: user.bio || ''
+    });
+  }, [user]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit for Base64 storage in Firestore
+        alert('File is too large! Please choose an image under 1MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditForm({ ...editForm, avatar: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = () => {
     const updatedUser = {
@@ -176,15 +200,31 @@ export default function Profile({ user, snapshots, region, onUpdate }: ProfilePr
               </div>
 
               <div className="space-y-6">
-                <div className="flex justify-center mb-8">
-                   <div className="relative group">
-                      <div className="w-32 h-32 rounded-full border-4 border-black overflow-hidden bg-sky-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex flex-col items-center mb-8">
+                   <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      <div className="w-32 h-32 rounded-full border-4 border-black overflow-hidden bg-sky-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative">
                          <img src={editForm.avatar} alt="Preview" className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Upload className="w-8 h-8 text-white" />
+                         </div>
                       </div>
                       <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black p-2 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                          <Camera className="w-4 h-4" />
                       </div>
                    </div>
+                   <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleFileChange}
+                   />
+                   <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-4 text-[10px] font-black uppercase tracking-widest text-sky-500 hover:underline"
+                   >
+                      Upload New Image
+                   </button>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">

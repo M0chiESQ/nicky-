@@ -3,16 +3,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { LogIn, Compass, MapPin, Zap } from 'lucide-react';
 import { signInWithGoogle } from '../lib/firebase';
 
 export default function LoginView() {
+  const [error, setError] = useState<string | null>(null);
+
   const handleGoogleLogin = async () => {
+    setError(null);
     try {
       await signInWithGoogle();
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      if (err.code === 'auth/unauthorized-domain') {
+        setError('DOMAIN_NOT_AUTHORIZED');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('POPUP_BLOCKED');
+      } else {
+        setError('GENERIC_ERROR');
+      }
     }
   };
 
@@ -36,6 +47,27 @@ export default function LoginView() {
             Buggy's <span className="text-red-500">Travels</span>
           </h1>
           <p className="text-zinc-500 font-bold mb-12 italic">Sign in to start your adventure across Taipei and the USA.</p>
+
+          {error && (
+            <div className="mb-8 p-4 bg-red-50 border-2 border-black rounded-2xl text-left">
+              <p className="text-[10px] font-black uppercase text-red-600 mb-2">Login Error Detected</p>
+              <p className="text-xs font-bold leading-relaxed">
+                {error === 'DOMAIN_NOT_AUTHORIZED' ? (
+                  <>
+                    This domain is not authorized in Firebase. 
+                    <br /><br />
+                    <span className="text-[10px] uppercase underline">Action Required:</span>
+                    <br />
+                    Add <strong>{window.location.hostname}</strong> to "Authorized domains" in your Firebase Auth settings.
+                  </>
+                ) : error === 'POPUP_BLOCKED' ? (
+                  "The login popup was blocked. Please allow popups for this site."
+                ) : (
+                  "Failed to sign in. Please check your internet connection or try again."
+                )}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-4 text-center">
             <button 

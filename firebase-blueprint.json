@@ -19,30 +19,50 @@
     },
     "Post": {
       "title": "Post",
-      "description": "A blog post or adventure entry",
+      "description": "A snapshot entry",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
+        "username": { "type": "string" },
+        "userAvatar": { "type": "string" },
         "imageUrl": { "type": "string" },
-        "category": { "type": "string" },
-        "readTime": { "type": "string" },
-        "date": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "caption": { "type": "string" },
+        "location": { "type": "string" },
+        "likes": { "type": "array" },
+        "createdAt": { "type": "number" },
+        "type": { "type": "string" }
       },
-      "required": ["userId", "title", "content"]
+      "required": ["userId", "imageUrl"]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "A blog article",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "readingTime": { "type": "string" }
+      },
+      "required": ["authorId", "title"]
     }
   },
   "firestore": {
     "users/{userId}": {
       "schema": "User",
-      "description": "Public and private user profiles"
+      "description": "User profiles"
     },
-    "posts/{postId}": {
+    "blog_posts/{postId}": {
+      "schema": "BlogPost",
+      "description": "Blog entries"
+    },
+    "snapshots/{postId}": {
       "schema": "Post",
-      "description": "Blog and adventure entries"
+      "description": "Snapshot entries"
     }
   }
 }

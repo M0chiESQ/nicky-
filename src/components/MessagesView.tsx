@@ -6,8 +6,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, UserPlus, Search, MessageSquare, Zap, ChevronLeft, MapPin, Radar, X } from 'lucide-react';
-import { Friend, Message } from '../types';
-import { MOCK_USER } from '../constants';
+import { Friend, Message, User } from '../types';
 
 const MOCK_FRIENDS: Friend[] = [
   { 
@@ -46,9 +45,10 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
 
 interface MessagesViewProps {
   region: string;
+  currentUser: User | null;
 }
 
-export default function MessagesView({ region }: MessagesViewProps) {
+export default function MessagesView({ region, currentUser }: MessagesViewProps) {
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [messages, setMessages] = useState<Record<string, Message[]>>(MOCK_MESSAGES);
   const [newMessage, setNewMessage] = useState('');
@@ -57,11 +57,11 @@ export default function MessagesView({ region }: MessagesViewProps) {
   const [viewMode, setViewMode] = useState<'chat' | 'radar'>('chat');
 
   const handleSendMessage = () => {
-    if (!selectedFriend || !newMessage.trim()) return;
+    if (!selectedFriend || !newMessage.trim() || !currentUser) return;
     
     const msg: Message = {
       id: Date.now().toString(),
-      senderId: 'user_1',
+      senderId: currentUser.id,
       text: newMessage,
       timestamp: Date.now()
     };

@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navigation from './components/Navigation';
 import BlogView from './components/BlogView';
 import Feed from './components/Feed';
@@ -22,17 +22,27 @@ import NavigationView from './components/NavigationView';
 import GlobalDestinationsView from './components/GlobalDestinationsView';
 import LoginView from './components/LoginView';
 import { useAuth } from './hooks/useAuth';
-import { MOCK_USER, MOCK_BLOG_POSTS, MOCK_POSTS } from './constants';
+import { db, handleFirestoreError, OperationType } from './lib/firebase';
+import { 
+  collection, 
+  query, 
+  onSnapshot, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  updateDoc, 
+  serverTimestamp, 
+  orderBy 
+} from 'firebase/firestore';
 import { Settings, PenTool, Layout, Eye, Save, X, ChevronLeft, Camera } from 'lucide-react';
 import { BlogPost, Post, User } from './types';
 
 export default function App() {
-  const { user: authUser, loading } = useAuth();
-  const [currentUser, setCurrentUser] = useState<User>(MOCK_USER);
+  const { user: authUser, profile: currentUser, loading } = useAuth();
 
   const EMPTY_BLOG_POST: BlogPost = {
     id: '',
-    authorId: currentUser.id,
+    authorId: currentUser?.id || '',
     title: '',
     excerpt: '',
     content: '',
@@ -43,8 +53,8 @@ export default function App() {
   };
   const [activeTab, setActiveTab] = useState('home');
   const [region, setRegion] = useState('taiwan');
-  const [posts, setPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
-  const [snapshots, setSnapshots] = useState<Post[]>(MOCK_POSTS);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [snapshots, setSnapshots] = useState<Post[]>([]);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isCreatingBlogPost, setIsCreatingBlogPost] = useState(false);
   const [draftBlogPost, setDraftBlogPost] = useState<BlogPost>(EMPTY_BLOG_POST);
@@ -56,48 +66,99 @@ export default function App() {
     location: ''
   });
 
-  const handleUpdateProfile = (updatedUser: User) => {
-    setCurrentUser(updatedUser);
-  };
+  // Sync Blog Posts
+  useEffect(() => {
+    const q = query(collection(db, 'blog_posts'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+      setPosts(fetchedPosts);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'blog_posts'));
 
-  const handleSave = (updatedPost: BlogPost) => {
-    if (isCreatingBlogPost) {
-      setPosts([{ ...updatedPost, id: `blog_${Date.now()}` }, ...posts]);
-      setIsCreatingBlogPost(false);
-    } else {
-      setPosts(posts.map(p => p.id === updatedPost.id ? updatedPost : p));
+    return () => unsubscribe();
+  }, []);
+
+  // Sync Snapshots
+  useEffect(() => {
+    const q = query(collection(db, 'snapshots'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedSnapshots = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      setSnapshots(fetchedSnapshots);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'snapshots'));
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleUpdateProfile = async (updatedUser: User) => {
+    if (!authUser) return;
+    try {
+      const userDocRef = doc(db, 'users', authUser.uid);
+      await updateDoc(userDocRef, { ...updatedUser, updatedAt: serverTimestamp() });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${authUser.uid}`);
     }
-    setEditingPost(null);
   };
 
-  const handleDeleteSnapshot = (postId: string) => {
+  const handleSave = async (updatedPost: BlogPost) => {
+    if (!currentUser) return;
+    try {
+      if (isCreatingBlogPost) {
+        await addDoc(collection(db, 'blog_posts'), {
+          ...updatedPost,
+          authorId: currentUser.id,
+          date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        });
+        setIsCreatingBlogPost(false);
+      } else {
+        const postRef = doc(db, 'blog_posts', updatedPost.id);
+        const { id, ...postData } = updatedPost;
+        await updateDoc(postRef, postData);
+      }
+      setEditingPost(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'blog_posts');
+    }
+  };
+
+  const handleDeleteSnapshot = async (postId: string) => {
     if (confirm('Delete this snapshot forever?')) {
-      setSnapshots(snapshots.filter(s => s.id !== postId));
+      try {
+        await deleteDoc(doc(db, 'snapshots', postId));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, `snapshots/${postId}`);
+      }
     }
   };
 
-  const handleCreateSnapshot = () => {
-    const newPost: Post = {
-      id: `post_${Date.now()}`,
-      userId: currentUser.id,
-      username: currentUser.username,
-      userAvatar: currentUser.avatar,
-      imageUrl: newSnapshotData.imageUrl,
-      caption: newSnapshotData.caption,
-      location: newSnapshotData.location,
-      likes: [],
-      comments: [],
-      createdAt: Date.now(),
-      type: 'photo'
-    };
-    setSnapshots([newPost, ...snapshots]);
-    setIsCreatingSnapshot(false);
-    setNewSnapshotData({ imageUrl: 'https://images.unsplash.com/photo-1546750248-adc1d428385d?w=800', caption: '', location: '' });
+  const handleCreateSnapshot = async () => {
+    if (!currentUser) return;
+    try {
+      const newPost: Omit<Post, 'id'> = {
+        userId: currentUser.id,
+        username: currentUser.username,
+        userAvatar: currentUser.avatar,
+        imageUrl: newSnapshotData.imageUrl,
+        caption: newSnapshotData.caption,
+        location: newSnapshotData.location,
+        likes: [],
+        comments: [],
+        createdAt: Date.now(),
+        type: 'photo'
+      };
+      await addDoc(collection(db, 'snapshots'), newPost);
+      setIsCreatingSnapshot(false);
+      setNewSnapshotData({ imageUrl: 'https://images.unsplash.com/photo-1546750248-adc1d428385d?w=800', caption: '', location: '' });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'snapshots');
+    }
   };
 
-  const handleDeleteBlog = (postId: string) => {
+  const handleDeleteBlog = async (postId: string) => {
     if (confirm('Delete this chapter from your journal?')) {
-      setPosts(posts.filter(p => p.id !== postId));
+      try {
+        await deleteDoc(doc(db, 'blog_posts', postId));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, `blog_posts/${postId}`);
+      }
     }
   };
 
@@ -396,7 +457,7 @@ export default function App() {
       case 'destinations':
         return region === 'taiwan' ? <DestinationsView /> : region === 'usa' ? <USADestinationsView /> : <GlobalDestinationsView />;
       case 'messages':
-        return <MessagesView region={region} />;
+        return <MessagesView region={region} currentUser={currentUser} />;
       case 'navigation':
         return <NavigationView region={region} />;
       case 'packing':
