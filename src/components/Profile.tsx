@@ -190,94 +190,96 @@ export default function Profile({ user, snapshots, region, onUpdate }: ProfilePr
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg bg-white border-4 border-black rounded-[40px] p-10 shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]"
+              className="relative w-full max-w-lg bg-white border-4 border-black rounded-[40px] shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between p-10 pb-4">
                 <h2 className="text-3xl font-black italic tracking-tighter uppercase underline">Update Identity</h2>
                 <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="flex flex-col items-center mb-8">
-                   <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                      <div className="w-32 h-32 rounded-full border-4 border-black overflow-hidden bg-sky-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative">
-                         <img src={editForm.avatar} alt="Preview" className="w-full h-full object-cover" />
-                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Upload className="w-8 h-8 text-white" />
-                         </div>
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black p-2 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                         <Camera className="w-4 h-4" />
-                      </div>
-                   </div>
-                   <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept="image/*" 
-                      onChange={handleFileChange}
-                   />
-                   <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="mt-4 text-[10px] font-black uppercase tracking-widest text-sky-500 hover:underline"
-                   >
-                      Upload New Image
-                   </button>
-                </div>
+              <div className="flex-1 overflow-y-auto px-10 pb-10">
+                <div className="space-y-6">
+                  <div className="flex flex-col items-center mb-8">
+                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <div className="w-32 h-32 rounded-full border-4 border-black overflow-hidden bg-sky-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative">
+                          <img src={editForm.avatar} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <Upload className="w-8 h-8 text-white" />
+                          </div>
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black p-2 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <Camera className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleFileChange}
+                    />
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-4 text-[10px] font-black uppercase tracking-widest text-sky-500 hover:underline"
+                    >
+                        Upload New Image
+                    </button>
+                  </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                   <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Trainer Handle</label>
-                      <input 
-                        type="text" 
-                        value={editForm.username}
-                        onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                        className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white"
-                        placeholder="username"
-                      />
-                   </div>
-                   <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Display Name</label>
-                      <input 
-                        type="text" 
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                        className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white"
-                        placeholder="Your Name"
-                      />
-                   </div>
-                </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Trainer Handle</label>
+                        <input 
+                          type="text" 
+                          value={editForm.username}
+                          onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                          className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white"
+                          placeholder="username"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Display Name</label>
+                        <input 
+                          type="text" 
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                          className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white"
+                          placeholder="Your Name"
+                        />
+                    </div>
+                  </div>
 
-                <div>
-                   <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Avatar URL</label>
-                   <input 
-                     type="text" 
-                     value={editForm.avatar}
-                     onChange={(e) => setEditForm({...editForm, avatar: e.target.value})}
-                     className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white"
-                     placeholder="https://..."
-                   />
-                </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Avatar URL</label>
+                    <input 
+                      type="text" 
+                      value={editForm.avatar}
+                      onChange={(e) => setEditForm({...editForm, avatar: e.target.value})}
+                      className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white"
+                      placeholder="https://..."
+                    />
+                  </div>
 
-                <div>
-                   <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Short Bio</label>
-                   <textarea 
-                     value={editForm.bio}
-                     onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                     className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white h-24 resize-none"
-                     placeholder="What's your story?"
-                   />
-                </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-sky-500 mb-2">Short Bio</label>
+                    <textarea 
+                      value={editForm.bio}
+                      onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                      className="w-full bg-zinc-50 border-4 border-black rounded-2xl p-4 font-bold outline-none focus:bg-white h-24 resize-none"
+                      placeholder="What's your story?"
+                    />
+                  </div>
 
-                <button 
-                  onClick={handleSave}
-                  className="w-full pokemon-button bg-black text-white py-4 flex items-center justify-center gap-3"
-                >
-                  <Save className="w-5 h-5 text-yellow-400" />
-                  CONFIRM UPDATES
-                </button>
+                  <button 
+                    onClick={handleSave}
+                    className="w-full pokemon-button bg-black text-white py-4 flex items-center justify-center gap-3"
+                  >
+                    <Save className="w-5 h-5 text-yellow-400" />
+                    CONFIRM UPDATES
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

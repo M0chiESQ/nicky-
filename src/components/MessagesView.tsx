@@ -8,40 +8,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, UserPlus, Search, MessageSquare, Zap, ChevronLeft, MapPin, Radar, X } from 'lucide-react';
 import { Friend, Message, User } from '../types';
 
-const MOCK_FRIENDS: Friend[] = [
-  { 
-    id: 'user_2', 
-    username: 'pkmn_master', 
-    avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Felix', 
-    lastMessage: 'Coming to Tainan tomorrow!', 
-    status: 'online', 
-    location: { name: 'Taipei Main Station', coordinates: { x: 45, y: 30 } }
-  },
-  { 
-    id: 'user_3', 
-    username: 'taipei_ghost', 
-    avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Aria', 
-    lastMessage: 'That beef noodle place was fire.', 
-    status: 'battling',
-    location: { name: 'Ximending', coordinates: { x: 40, y: 35 } }
-  },
-  { 
-    id: 'user_4', 
-    username: 'misty_blue', 
-    avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Misty', 
-    lastMessage: 'Wanna visit Keelung?', 
-    status: 'offline',
-    location: { name: 'Keelung Harbor', coordinates: { x: 60, y: 15 } }
-  },
-];
+const MOCK_FRIENDS: Friend[] = [];
 
-const MOCK_MESSAGES: Record<string, Message[]> = {
-  'user_2': [
-    { id: '1', senderId: 'user_2', text: 'Yo! You seen the new mural in Ximending?', timestamp: Date.now() - 3600000 },
-    { id: '2', senderId: 'user_1', text: 'Not yet, was it near the station?', timestamp: Date.now() - 3000000 },
-    { id: '3', senderId: 'user_2', text: 'Yeah, right by exit 6. It\'s massive!', timestamp: Date.now() - 2000000 },
-  ]
-};
+const MOCK_MESSAGES: Record<string, Message[]> = {};
 
 interface MessagesViewProps {
   region: string;
@@ -353,26 +322,7 @@ export default function MessagesView({ region, currentUser }: MessagesViewProps)
                 <div className="bg-sky-50 border-4 border-black rounded-[32px] p-6">
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-sky-400 mb-4">RECOMMENDED DISPATCHES</h4>
                   <div className="space-y-4">
-                    {[
-                      { name: 'taipei_ghost', location: 'Ximending', status: 'online' },
-                      { name: 'usa_hustle', location: 'NYC Times Sq', status: 'battling' },
-                      { name: 'island_hopper', location: 'Penghu', status: 'online' }
-                    ].map(rec => (
-                      <div key={rec.name} className="flex items-center justify-between group">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center p-1">
-                            <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${rec.name}`} className="w-full h-full rounded-full" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black uppercase">{rec.name}</div>
-                            <div className="text-[8px] font-bold text-zinc-500 uppercase">{rec.location}</div>
-                          </div>
-                        </div>
-                        <button className="bg-black text-white px-4 py-2 text-[10px] font-black rounded-xl hover:bg-zinc-800 transition-colors">
-                          ADD
-                        </button>
-                      </div>
-                    ))}
+                    <p className="text-[10px] font-bold text-zinc-400 italic">Finding travelers in your area...</p>
                   </div>
                 </div>
               </div>

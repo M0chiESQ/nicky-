@@ -22,16 +22,14 @@ export default function Feed({ currentUserId, posts, onDelete }: FeedProps) {
     <div className="flex flex-col items-center">
         {/* Stories bar (Buggy Bubbles) */}
         <div className="w-full max-w-4xl flex gap-8 overflow-x-auto pb-12 scrollbar-hide px-6">
-           {[1,2,3,4,5,6].map(i => (
-             <div key={i} className="flex-shrink-0 flex flex-col items-center gap-4">
+             <div className="flex-shrink-0 flex flex-col items-center gap-4">
                <div className="w-24 h-24 rounded-full border-4 border-black group cursor-pointer transition-transform hover:scale-110 active:scale-95 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-1">
                   <div className="w-full h-full rounded-full border-2 border-black overflow-hidden bg-sky-50">
-                     <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=user${i}`} alt="Avatar" className="w-full h-full object-cover" />
+                     <img src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=user1" alt="Avatar" className="w-full h-full object-cover" />
                   </div>
                </div>
-               <span className="text-xs font-black text-black uppercase tracking-widest">{i === 1 ? 'YOU' : `LVL ${i*10}`}</span>
+               <span className="text-xs font-black text-black uppercase tracking-widest text-sky-500">YOU</span>
              </div>
-           ))}
         </div>
 
         <div className="w-full max-w-2xl px-4 md:px-0">
