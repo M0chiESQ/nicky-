@@ -1,0 +1,13 @@
+{
+  "name": "Buggy's Travel's",
+  "description": "A charming, Pokemon-inspired personal travel log documenting adventures in Taipei.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "Editorial Blogging",
+    "Personal Adventure Log",
+    "Creative Control"
+  ]
+}

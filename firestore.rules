@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidUser(data) {
+      return data.uid == request.auth.uid &&
+             data.username is string && data.username.size() <= 50 &&
+             data.name is string && data.name.size() <= 100 &&
+             (data.bio == null || (data.bio is string && data.bio.size() <= 500)) &&
+             data.keys().hasAll(['uid', 'username', 'name', 'avatar', 'followers', 'following', 'adventures', 'updatedAt']) &&
+             data.keys().size() == 8;
+    }
+
+    function isValidPost(data) {
+      return data.userId == request.auth.uid &&
+             data.title is string && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 10000 &&
+             data.createdAt == request.time;
+    }
+
+    // --- Collections ---
+
+    match /users/{userId} {
+      allow get: if true;
+      allow list: if true; // Public profiles are searchable
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['username', 'name', 'avatar', 'bio', 'updatedAt'])
+      );
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidPost(incoming());
+      allow update: if isOwner(existing().userId) && isValidPost(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'imageUrl', 'category', 'readTime'])
+      );
+      allow delete: if isOwner(existing().userId);
+    }
+
+    // Inter-record consistency check
+    // If we were adding likes or similar, we'd use exists() or existsAfter()
+  }
+}
